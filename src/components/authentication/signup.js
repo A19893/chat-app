@@ -11,6 +11,8 @@ import {
 import React, { useState } from "react";
 import { signup_user } from "../../services/users_service";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../../features/users/users.slice";
 const Signup = () => {
   const [name, setName] = useState();
   const [email, setEmail] = useState();
@@ -21,8 +23,10 @@ const Signup = () => {
   const [show, setShow] = useState(false);
   const [confirmShow, setConfirmShow] = useState(false);
   const toast = useToast();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const postDetails = (img) => {
+    
     setPicLoading(true);
     if (img === undefined) {
       console.log("gwegr");
@@ -92,7 +96,6 @@ const Signup = () => {
     try {
       console.log({ name, email, password, pic });
       const { data } = await signup_user({ name, email, password, pic });
-      console.log(data);
       toast({
         title: "Registeration Successful",
         status: "success",
@@ -100,6 +103,7 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
+      dispatch(addUser(data));
       setPicLoading(false);
       navigate("/chats");
     } catch (error) {

@@ -11,6 +11,8 @@ import {
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth_user } from "../../services/users_service";
+import { useDispatch } from "react-redux";
+import { addUser } from "../../features/users/users.slice";
 
 const Login = () => {
   const [email, setEmail] = useState();
@@ -18,6 +20,7 @@ const Login = () => {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const submitHandler = async () => {
     setLoading(true);
@@ -36,6 +39,7 @@ const Login = () => {
       console.log({ email, password });
       const { data } = await auth_user({ email, password });
       console.log(data);
+      dispatch(addUser(data));
       toast({
         title: "Login Successful",
         status: "success",
