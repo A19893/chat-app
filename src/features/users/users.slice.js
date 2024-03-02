@@ -15,8 +15,13 @@ const userSlice = createSlice({
       state.user = action.payload?.data;
       state.token = action.payload?.token
     },
+    removeUser: (state,action) => {
+      state.loggedInState = false;
+      state.user = {};
+      state.token = "";
+    }
   },
 });
 
-export const { addUser } = userSlice.actions;
+export const { addUser, removeUser } = userSlice.actions;
 export default userSlice.reducer;

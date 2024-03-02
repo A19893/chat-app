@@ -2,6 +2,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import usersSlice from "../features/users/users.slice";
+import chatsSlice from "../features/chats/chats.slice";
 const persistConfig = {
   key: "root",
   version: 1,
@@ -10,6 +11,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   user: usersSlice,
+  chats: chatsSlice
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
