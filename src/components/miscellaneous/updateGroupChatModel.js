@@ -23,7 +23,7 @@ import UserListItem from "../userAvatar/userListItem";
 import { add_member_to_group, fetch_users, remove_member_from_group, rename_group } from "../../services/chats_service";
 import { addSelectedChat, removeSelectedChat } from "../../features/chats/chats.slice";
 
-const UpdateGroupChatModel = ({ fetchAgain, setFetchAgain }) => {
+const UpdateGroupChatModel = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user, token } = useSelector((state) => state.user);
   const { selectedChat } = useSelector((state) => state.chats);
@@ -59,6 +59,7 @@ const UpdateGroupChatModel = ({ fetchAgain, setFetchAgain }) => {
         }, config);
 
         user1._id === user._id ? dispatch(removeSelectedChat()):dispatch(addSelectedChat(data));
+        fetchMessages();
         setFetchAgain(!fetchAgain);
         setLoading(false);
       } catch (error) {

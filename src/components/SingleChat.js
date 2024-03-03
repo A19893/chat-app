@@ -1,19 +1,86 @@
 import { ArrowBackIcon } from "@chakra-ui/icons";
-import { Box, IconButton, Text } from "@chakra-ui/react";
-import React from "react";
+import { Box, FormControl, IconButton, Input, Spinner, Text, useToast } from "@chakra-ui/react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  addSelectedChat,
   removeSelectedChat,
 } from "../features/chats/chats.slice";
 import { getSender, getSenderFull } from "../config/chatLogics";
 import ProfileModal from "./miscellaneous/profileModal";
 import UpdateGroupChatModel from "./miscellaneous/updateGroupChatModel";
-
+import { fetch_message, send_message } from "../services/messages_service";
+import ScrollableChat from "./ScrollableChat";
+import './styles.css'
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState();
   const { user } = useSelector((state) => state.user);
-  const { selectedChat } = useSelector((state) => state.chats);
+  const {token} = useSelector((state)=> state.user)
+  const { selectedChat } = useSelector((state) => state.chats)
+  const toast = useToast();
   const dispatch = useDispatch();
+  const fetchMessages = async () =>{
+    if(!selectedChat) return;
+    try{
+      setLoading(true);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const {data} = await fetch_message(selectedChat._id, config);
+      console.log(data)
+      setMessages(data);
+      setLoading(false);
+    }
+    catch(error){
+      toast({
+        title: "Error Occured!",
+        description: "Failed to Load the Messages",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setLoading(false);
+    }
+   }
+  useEffect(()=>{
+   fetchMessages();
+  }, [])
+  const sendMessage = async(e)=>{
+    if(e.key==="Enter" && newMessage){
+      try{
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        setNewMessage("");
+        const { data }= await send_message({
+            content: newMessage,
+            chatId: selectedChat._id
+        }, config) 
+        console.log(data)
+        setMessages([...messages, data])
+      }
+      catch(error){
+        toast({
+          title: "Error Occured!",
+          description: "Failed to send the Message",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
+      }
+    }
+  }
+  const typingHandler = (e) => {
+    setNewMessage(e.target.value)
+  }
   return (
     <>
       {selectedChat ? (
@@ -44,7 +111,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
              <>
               {selectedChat.chatName.toUpperCase()}
                   <UpdateGroupChatModel
-                    // fetchMessages={fetchMessages}
+                    fetchMessages={fetchMessages}
                     fetchAgain={fetchAgain}
                     setFetchAgain={setFetchAgain}
                   />
@@ -61,7 +128,47 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           h="100%"
           borderRadius="lg"
           overflowY="hidden">
-
+           {
+            loading ? (
+            <Spinner
+             size={"xl"}
+             w={20}
+             h={20}
+             alignSelf={"center"}
+             margin={"auto"}
+            />
+            ):(
+              <div className="messages">
+                <ScrollableChat messages={messages} />
+              </div>
+            )
+           }
+           <FormControl
+              onKeyDown={sendMessage}
+              // id="first-name"
+              isRequired
+              mt={3}
+            >
+              {/* {istyping ? (
+                <div>
+                  <Lottie
+                    options={defaultOptions}
+                    // height={50}
+                    width={70}
+                    style={{ marginBottom: 15, marginLeft: 0 }}
+                  />
+                </div>
+              ) : (
+                <></>
+              )} */}
+              <Input
+                variant="filled"
+                bg="#E0E0E0"
+                placeholder="Enter a message.."
+                value={newMessage}
+                onChange={typingHandler}
+              />
+            </FormControl>
           </Box>
         </>
       ) : (
