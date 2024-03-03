@@ -11,15 +11,24 @@ import UpdateGroupChatModel from "./miscellaneous/updateGroupChatModel";
 import { fetch_message, send_message } from "../services/messages_service";
 import ScrollableChat from "./ScrollableChat";
 import './styles.css'
+import io from 'socket.io-client'
+const ENDPOINT ='http://localhost:8080'
+var socket, selectedChatCompare;
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState();
+  const [socketConected, setSocketConnected] = useState(false);
   const { user } = useSelector((state) => state.user);
   const {token} = useSelector((state)=> state.user)
   const { selectedChat } = useSelector((state) => state.chats)
   const toast = useToast();
   const dispatch = useDispatch();
+  useEffect(()=>{
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connected", ()=> setSocketConnected(true))
+   },[])
   const fetchMessages = async () =>{
     if(!selectedChat) return;
     try{
@@ -31,9 +40,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       };
 
       const {data} = await fetch_message(selectedChat._id, config);
-      console.log(data)
       setMessages(data);
       setLoading(false);
+      socket.emit('join chat', selectedChat._id)
     }
     catch(error){
       toast({
@@ -49,6 +58,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
    }
   useEffect(()=>{
    fetchMessages();
+
+   selectedChatCompare = selectedChat;
+  }, [selectedChat])
+
+  useEffect(()=> {
+    socket.on("message recieved", (newMessageRecieved) => {
+      console.log(newMessageRecieved, messages)
+      if(!selectedChatCompare ||  selectedChatCompare._id !== newMessageRecieved.chat._id){
+
+      }
+      else{
+        setMessages([...messages, newMessageRecieved])
+      }
+    })
   }, [])
   const sendMessage = async(e)=>{
     if(e.key==="Enter" && newMessage){
@@ -64,6 +87,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             chatId: selectedChat._id
         }, config) 
         console.log(data)
+        socket.emit('new message', data)
         setMessages([...messages, data])
       }
       catch(error){
